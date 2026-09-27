@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Closet App</title>
+
+  <!-- Required for PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffb6c1">
+</head>
+
+<body>
+  <h1>My Closet</h1>
+
+  <!-- Your closet content goes here -->
+
+  <!-- Install button (shows automatically when installable) -->
+  <button id="installBtn" style="display:none;">
+    Install Closet App
+  </button>
+
+  <script>
+    /* Install button logic */
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+
+      installBtn.addEventListener('click', async () => {
+        installBtn.style.display = 'none';
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        console.log('Install choice:', result.outcome);
+        deferredPrompt = null;
+      });
+    });
+
+    /* Service worker registration */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service worker registered'))
+        .catch(err => console.error('SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>
