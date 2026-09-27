@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pastel Closet</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #ffeaf4, #e8f3ff);
+      color: #444;
+    }
+    .app {
+      max-width: 420px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 12px 16px;
+      text-align: center;
+      font-weight: 600;
+      color: #555;
+    }
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      background: #ffffffaa;
+      backdrop-filter: blur(8px);
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      border-bottom-color: #ff9ac4;
+      font-weight: 600;
+      color: #ff4f9a;
+    }
+    main {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .page {
+      position: absolute;
+      inset: 0;
+      padding: 12px 16px 16px;
+      overflow-y: auto;
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
+
+    /* Category swipe area */
+    .category-strip {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding-bottom: 8px;
+      scroll-snap-type: x mandatory;
+    }
+    .category-card {
+      min-width: 260px;
+      scroll-snap-align: center;
+      background: #ffffffdd;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .category-name {
+      font-weight: 600;
+      color: #666;
+    }
+    .category-controls button {
+      border: none;
+      background: #ffd6eb;
+      color: #ff4f9a;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .category-image {
+      width: 100%;
+      height: 180px;
+      border-radius: 14px;
+      background: #f5f7ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .category-image img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .empty-text {
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    /* Upload form */
+    .upload-box {
+      margin-top: 10px;
+      background: #ffffffdd;
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .upload-box h3 {
+      margin: 0 0 6px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .upload-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .upload-row input,
+    .upload-row select {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 0.8rem;
+    }
+    .upload-row input[type="file"] {
+      padding: 4px;
+    }
+    .upload-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #ff9ac4;
+      color: white;
+    }
+
+    /* Outfit preview */
+    .preview-box {
+      margin-top: 12px;
+      background: #ffffffdd;
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .preview-item {
+      flex: 1 1 45%;
+      background: #f5f7ff;
+      border-radius: 10px;
+      padding: 6px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    /* AI page */
+    .ai-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .ai-controls button {
+      flex: 1 1 45%;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #e8f3ff;
+      color: #4b6fbf;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>Pastel Closet</header>
+
+    <div class="tabs">
+      <div class="tab active" data-page="closet">Your Closet</div>
+      <div class="tab" data-page="ai">AI Closet</div>
+    </div>
+
+    <main>
+      <!-- Page 1: Your Closet -->
+      <section id="page-closet" class="page active">
+        <div class="category-strip" id="categoryStrip"></div>
+
+        <div class="upload-box">
+          <h3>Add item</h3>
+          <div class="upload-row">
+            <input id="categoryInput" placeholder="Category (e.g. Tops, Shoes)" />
+            <select id="slotInput">
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="shoes">Shoes</option>
+              <option value="accessory">Accessory</option>
+            </select>
+          </div>
+          <div class="upload-row">
+            <input type="file" id="imageInput" accept="image/*" />
+          </div>
+          <div class="upload-actions">
+            <button class="btn btn-primary" id="addItemBtn">Save item</button>
+          </div>
+        </div>
+
+        <div class="preview-box">
+          <h3>Outfit preview</h3>
+          <div class="preview-grid" id="previewGrid">
+            <!-- Filled by JS with current selections -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 2: AI Closet -->
+      <section id="page-ai" class="page">
+        <div class="ai-controls">
+          <button data-mode="random">Random cute outfit</button>
+          <button data-mode="color">Color‑matching outfit</button>
+          <button data-mode="season">Season‑based outfit</button>
+          <button data-mode="auto">Smart mix (all modes)</button>
+        </div>
+
+        <div class="preview-box">
+          <h3>AI outfit</h3>
+          <div class="preview-grid" id="aiPreviewGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Basic data structure in localStorage
+    const STORAGE_KEY = "pastelClosetItems";
+
+    function loadItems() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+
+    function saveItems(items) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    let items = loadItems();
+    let currentIndexByCategory = {}; // { category: index }
+
+    const categoryStrip = document.getElementById("categoryStrip");
+    const previewGrid = document.getElementById("previewGrid");
+    const aiPreviewGrid = document.getElementById("aiPreviewGrid");
+
+    function groupByCategory() {
+      const map = {};
+      items.forEach(item => {
+        if (!map[item.category]) map[item.category] = [];
+        map[item.category].push(item);
+      });
+      return map;
+    }
+
+    function renderCategories() {
+      const grouped = groupByCategory();
+      categoryStrip.innerHTML = "";
+
+      Object.keys(grouped).forEach(category => {
+        if (!(category in currentIndexByCategory)) {
+          currentIndexByCategory[category] = 0;
+        }
+        const idx = currentIndexByCategory[category];
+        const list = grouped[category];
+        const currentItem = list[idx] || null;
+
+        const card = document.createElement("div");
+        card.className = "category-card";
+
+        const header = document.createElement("div");
+        header.className = "category-header";
+
+        const name = document.createElement("div");
+        name.className = "category-name";
+        name.textContent = category;
+
+        const controls = document.createElement("div");
+        controls.className = "category-controls";
+
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "Prev";
+        prevBtn.onclick = () => {
+          currentIndexByCategory[category] =
+            (currentIndexByCategory[category] - 1 + list.length) % list.length;
+          renderCategories();
+          renderPreview();
+        };
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next";
+        nextBtn.onclick = () => {
+          currentIndexByCategory[category] =
+            (currentIndexByCategory[category] + 1) % list.length;
+          renderCategories();
+          renderPreview();
+        };
+
+        controls.appendChild(prevBtn);
+        controls.appendChild(nextBtn);
+
+        header.appendChild(name);
+        header.appendChild(controls);
+
+        const imgBox = document.createElement("div");
+        imgBox.className = "category-image";
+
+        if (currentItem) {
+          const img = document.createElement("img");
+          img.src = currentItem.data;
+          imgBox.appendChild(img);
+        } else {
+          const empty = document.createElement("div");
+          empty.className = "empty-text";
+          empty.textContent = "No items yet";
+          imgBox.appendChild(empty);
+        }
+
+        card.appendChild(header);
+        card.appendChild(imgBox);
+        categoryStrip.appendChild(card);
+      });
+
+      renderPreview();
+    }
+
+    function renderPreview() {
+      previewGrid.innerHTML = "";
+      const grouped = groupByCategory();
+
+      ["top", "bottom", "shoes", "accessory"].forEach(slot => {
+        const slotDiv = document.createElement("div");
+        slotDiv.className = "preview-item";
+        slotDiv.textContent = slot.charAt(0).toUpperCase() + slot.slice(1);
+
+        // Find current item in any category with this slot
+        let found = null;
+        Object.keys(grouped).forEach(category => {
+          const idx = currentIndexByCategory[category] ?? 0;
+          const item = grouped[category][idx];
+          if (item && item.slot === slot && !found) {
+            found = item;
+          }
+        });
+
+        if (found) {
+          const img = document.createElement("img");
+          img.src = found.data;
+          img.style.width = "100%";
+          img.style.marginTop = "4px";
+          slotDiv.appendChild(img);
+        } else {
+          const empty = document.createElement("div");
+          empty.className = "empty-text";
+          empty.textContent = "None selected";
+          slotDiv.appendChild(empty);
+        }
+
+        previewGrid.appendChild(slotDiv);
+      });
+    }
+
+    // Upload handling
+    document.getElementById("addItemBtn").onclick = () => {
+      const category = document.getElementById("categoryInput").value.trim();
+      const slot = document.getElementById("slotInput").value;
+      const fileInput = document.getElementById("imageInput");
+      const file = fileInput.files[0];
+
+      if (!category || !file) {
+        alert("Please choose a category and an image.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        items.push({
+          id: Date.now(),
+          category,
+          slot,
+          data: dataUrl
+        });
+        saveItems(items);
+        document.getElementById("categoryInput").value = "";
+        fileInput.value = "";
+        renderCategories();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        const page = tab.dataset.page;
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+      });
+    });
+
+    // Simple AI outfit generator (placeholder logic)
+    function pickRandomBySlot(slot) {
+      const candidates = items.filter(i => i.slot === slot);
+      if (!candidates.length) return null;
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function renderAiOutfit(mode) {
+      aiPreviewGrid.innerHTML = "";
+
+      ["top", "bottom", "shoes", "accessory"].forEach(slot => {
+        const slotDiv = document.createElement("div");
+        slotDiv.className = "preview-item";
+        slotDiv.textContent = slot.charAt(0).toUpperCase() + slot.slice(1);
+
+        // For now, all modes use random; you can refine later
+        const item = pickRandomBySlot(slot);
+
+        if (item) {
+          const img = document.createElement("img");
+          img.src = item.data;
+          img.style.width = "100%";
+          img.style.marginTop = "4px";
+          slotDiv.appendChild(img);
+        } else {
+          const empty = document.createElement("div");
+          empty.className = "empty-text";
+          empty.textContent = "No items for this slot";
+          slotDiv.appendChild(empty);
+        }
+
+        aiPreviewGrid.appendChild(slotDiv);
+      });
+    }
+
+    document.querySelectorAll(".ai-controls button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.mode;
+        renderAiOutfit(mode);
+      });
+    });
+
+    // Initial render
+    renderCategories();
+  </script>
+</body>
