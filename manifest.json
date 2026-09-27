@@ -1,0 +1,9 @@
+{
+  "name": "Closet App",
+  "short_name": "Closet",
+  "start_url": "/Clothing-Generator-/index.html",
+  "display": "standalone",
+  "background_color": "#ffeef6",
+  "theme_color": "#ffb6c1",
+  "icons": []
+}
